@@ -21,7 +21,7 @@ Name="Electronics"
 static Category billsCategory= new Category{
 Id=3,
 Name="Bills"
-};
+};  
 
 static List<Transaction> Transactions = [
 
@@ -74,6 +74,24 @@ foreach(var item in Transactions){
 }
 return NotFound();
 }
-    
+
+
+[HttpPost]
+ public ActionResult<Transaction> AddTransaction(Transaction item){
+
+int maxid=0;
+foreach(var i in Transactions){
+
+if(i.Id > maxid){
+maxid=i.Id;
+}
+}
+maxid +=1;
+item.Id=maxid;
+
+
+Transactions.Add(item);
+return CreatedAtAction(nameof(GetTransactionById), new{id= item.Id}, item);
+ }  
 }
 
