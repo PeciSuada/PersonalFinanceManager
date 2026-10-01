@@ -93,5 +93,40 @@ item.Id=maxid;
 Transactions.Add(item);
 return CreatedAtAction(nameof(GetTransactionById), new{id= item.Id}, item);
  }  
+
+
+ [HttpPut("{id}")]
+ public IActionResult  ChangeTransaction (int id, Transaction item){
+ 
+ foreach(var i in Transactions){
+if(id == i.Id){
+    i.Amount=item.Amount;
+    i.Description=item.Description;
+    i.Date=item.Date;
+    i.Type=item.Type;
+    i.CategoryId=item.CategoryId;
+
+    return NoContent();
+}
+
+ 
+ }
+
+return NotFound();
+ }
+
+
+
+ [HttpDelete("{id}")]
+ public IActionResult DeleteTransaction (int id){
+
+foreach(var i in Transactions){
+if(i.Id== id){
+Transactions.Remove(i);
+return NoContent();
+}
+}
+return NotFound();
+ }
 }
 
