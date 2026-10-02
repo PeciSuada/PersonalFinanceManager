@@ -58,19 +58,24 @@ Category=billsCategory
 ];
 
 [HttpGet]
-public ActionResult<List<Transaction>> GetTransactions(int? categoryId){
+public ActionResult<List<Transaction>> GetTransactions(int? categoryId, DateTime? from, DateTime? to){
+
+ List<Transaction> Result=Transactions;
 
 if(categoryId.HasValue){
-
-var Filtered =Transactions.Where(transaction=>transaction.CategoryId== categoryId);
-
-List<Transaction>Result=Filtered.ToList();
-
-return Ok(Result);
+ Result = Transactions.Where(item => item.CategoryId== categoryId).ToList(); 
 }
 
+ if(from.HasValue ){
+Result = Result.Where(item => item.Date.Date>=from).ToList();
+ }
 
-return Ok(Transactions);
+if(to.HasValue){
+ Result = Result.Where(item => item.Date.Date<=to).ToList();
+}
+ 
+return Ok(Result);
+
 }
 
 [HttpGet("{id}")]
