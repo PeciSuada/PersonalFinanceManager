@@ -58,9 +58,19 @@ Category=billsCategory
 ];
 
 [HttpGet]
-public ActionResult<List<Transaction>> GetTransactions(){
+public ActionResult<List<Transaction>> GetTransactions(int? categoryId){
 
-   return Ok(Transactions); //return Transactions also would work
+if(categoryId.HasValue){
+
+var Filtered =Transactions.Where(transaction=>transaction.CategoryId== categoryId);
+
+List<Transaction>Result=Filtered.ToList();
+
+return Ok(Result);
+}
+
+
+return Ok(Transactions);
 }
 
 [HttpGet("{id}")]
