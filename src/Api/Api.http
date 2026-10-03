@@ -1,85 +1,321 @@
 @host = http://localhost:5205
 
-### Sve transakcije
+# Personal Finance Manager - API requests
+#
+# How to use:
+#   1. Start the API: dotnet run --project src/Api
+#   2. Open this file in VS Code (REST Client extension required)
+#   3. Click "Send Request" above any request
+#
+# Notes:
+#   - Data is stored in memory, so restarting the API resets everything.
+#   - Run the requests top to bottom. Destructive requests (DELETE) are at the end of each section.
+#   - Transaction type: 0 = Income, 1 = Expense
+
+
+################################################################
+# TRANSACTIONS - READ
+################################################################
+
+### Get all transactions
 GET {{host}}/api/transactions
 
-### Filter po kategoriji i datumu
-GET {{host}}/api/transactions?categoryId=1&from=2026-10-01&to=2026-10-31
-
-### Jedna transakcija
+### Get a single transaction (expect 200)
 GET {{host}}/api/transactions/101
 
-### Nepostojeća (očekuješ 404)
+### Get a transaction that does not exist (expect 404)
 GET {{host}}/api/transactions/999
 
-### POST
+
+################################################################
+# TRANSACTIONS - FILTERS
+################################################################
+
+### Filter by category
+GET {{host}}/api/transactions?categoryId=2
+
+### Filter by category that has no transactions (expect empty list)
+GET {{host}}/api/transactions?categoryId=99
+
+### Filter by start date only
+GET {{host}}/api/transactions?from=2026-10-01
+
+### Filter by end date only
+GET {{host}}/api/transactions?to=2026-10-31
+
+### Filter by date range
+GET {{host}}/api/transactions?from=2026-10-01&to=2026-10-31
+
+### Filter by category and date range
+GET {{host}}/api/transactions?categoryId=1&from=2026-10-01&to=2026-10-31
+
+### Filter with a date range in the past (expect empty list)
+GET {{host}}/api/transactions?from=2020-01-01&to=2020-12-31
+
+
+################################################################
+# TRANSACTIONS - SUMMARY
+################################################################
+
+### Summary for all transactions (total income, total expense, balance)
+GET {{host}}/api/transactions/summary
+
+### Summary for a date range
+GET {{host}}/api/transactions/summary?from=2026-10-01&to=2026-10-31
+
+### Summary for a period with no transactions (expect all zeros)
+GET {{host}}/api/transactions/summary?from=2020-01-01&to=2020-12-31
+
+
+################################################################
+# TRANSACTIONS - CREATE (POST)
+################################################################
+
+### Create an expense (expect 201)
 POST {{host}}/api/transactions
 Content-Type: application/json
 
 {
   "amount": 20.00,
-  "description": "Kafa",
+  "description": "Coffee",
   "date": "2026-10-03T10:00:00",
   "type": 1,
   "categoryId": 1
 }
 
-### PUT
+### Create an income (expect 201)
+POST {{host}}/api/transactions
+Content-Type: application/json
+
+{
+  "amount": 1200.00,
+  "description": "Freelance project",
+  "date": "2026-10-03T12:00:00",
+  "type": 0,
+  "categoryId": 1
+}
+
+### Validation: negative amount (expect 400)
+POST {{host}}/api/transactions
+Content-Type: application/json
+
+{
+  "amount": -5,
+  "description": "Invalid amount",
+  "date": "2026-10-03T10:00:00",
+  "type": 1,
+  "categoryId": 1
+}
+
+### Validation: amount below the minimum (expect 400)
+POST {{host}}/api/transactions
+Content-Type: application/json
+
+{
+  "amount": 0.01,
+  "description": "Amount too small",
+  "date": "2026-10-03T10:00:00",
+  "type": 1,
+  "categoryId": 1
+}
+
+### Validation: amount above the maximum (expect 400)
+POST {{host}}/api/transactions
+Content-Type: application/json
+
+{
+  "amount": 99999999,
+  "description": "Amount too large",
+  "date": "2026-10-03T10:00:00",
+  "type": 1,
+  "categoryId": 1
+}
+
+### Validation: empty description (expect 400)
+POST {{host}}/api/transactions
+Content-Type: application/json
+
+{
+  "amount": 10,
+  "description": "",
+  "date": "2026-10-03T10:00:00",
+  "type": 1,
+  "categoryId": 1
+}
+
+### Validation: description missing completely (expect 400)
+POST {{host}}/api/transactions
+Content-Type: application/json
+
+{
+  "amount": 10,
+  "date": "2026-10-03T10:00:00",
+  "type": 1,
+  "categoryId": 1
+}
+
+### Validation: invalid category id (expect 400)
+POST {{host}}/api/transactions
+Content-Type: application/json
+
+{
+  "amount": 10,
+  "description": "Invalid category",
+  "date": "2026-10-03T10:00:00",
+  "type": 1,
+  "categoryId": 0
+}
+
+### Validation: malformed JSON body (expect 400)
+POST {{host}}/api/transactions
+Content-Type: application/json
+
+{
+  "amount": "not a number"
+}
+
+
+################################################################
+# TRANSACTIONS - UPDATE (PUT)
+################################################################
+
+### Update a transaction (expect 204)
 PUT {{host}}/api/transactions/101
 Content-Type: application/json
 
 {
   "amount": 50.00,
-  "description": "Izmijenjeno",
+  "description": "Updated description",
   "date": "2026-10-03T10:00:00",
   "type": 1,
   "categoryId": 2
 }
 
-### DELETE
+### Check the update (expect the new values)
+GET {{host}}/api/transactions/101
+
+### Validation: invalid data on update (expect 400)
+PUT {{host}}/api/transactions/101
+Content-Type: application/json
+
+{
+  "amount": -5,
+  "description": "",
+  "date": "2026-10-03T10:00:00",
+  "type": 1,
+  "categoryId": 1
+}
+
+### Update a transaction that does not exist (expect 404)
+PUT {{host}}/api/transactions/999
+Content-Type: application/json
+
+{
+  "amount": 10,
+  "description": "Does not exist",
+  "date": "2026-10-03T10:00:00",
+  "type": 1,
+  "categoryId": 1
+}
+
+
+################################################################
+# TRANSACTIONS - DELETE
+################################################################
+
+### Delete a transaction (expect 204)
 DELETE {{host}}/api/transactions/102
 
-### Summary
-GET {{host}}/api/transactions/summary
+### Check the deletion (expect 404)
+GET {{host}}/api/transactions/102
+
+### Delete a transaction that does not exist (expect 404)
+DELETE {{host}}/api/transactions/999
 
 
+################################################################
+# CATEGORIES - READ
+################################################################
 
-
-
-
-
-### Kategorije: sve
+### Get all categories
 GET {{host}}/api/categories
 
-### Kategorija: jedna
+### Get a single category (expect 200)
 GET {{host}}/api/categories/1
 
-### Kategorija: nepostojeća (očekuješ 404)
+### Get a category that does not exist (expect 404)
 GET {{host}}/api/categories/999
 
-### Kategorija: POST
+
+################################################################
+# CATEGORIES - CREATE (POST)
+################################################################
+
+### Create a category (expect 201)
 POST {{host}}/api/categories
 Content-Type: application/json
 
 {
-  "name": "Zabava"
+  "name": "Entertainment"
 }
 
-### Kategorija: PUT
+### Validation: empty name (expect 400 once CreateCategoryDto is in place)
+POST {{host}}/api/categories
+Content-Type: application/json
+
+{
+  "name": ""
+}
+
+### Validation: name missing completely (expect 400 once CreateCategoryDto is in place)
+POST {{host}}/api/categories
+Content-Type: application/json
+
+{
+}
+
+
+################################################################
+# CATEGORIES - UPDATE (PUT)
+################################################################
+
+### Update a category (expect 204)
 PUT {{host}}/api/categories/1
 Content-Type: application/json
 
 {
-  "name": "Hrana"
+  "name": "Food"
 }
 
-### Kategorija: PUT nepostojeća (očekuješ 404)
+### Check the update (expect the new name)
+GET {{host}}/api/categories/1
+
+### Validation: empty name on update (expect 400 once CreateCategoryDto is in place)
+PUT {{host}}/api/categories/1
+Content-Type: application/json
+
+{
+  "name": ""
+}
+
+### Update a category that does not exist (expect 404)
 PUT {{host}}/api/categories/999
 Content-Type: application/json
 
 {
-  "name": "Test"
+  "name": "Does not exist"
 }
 
-### Kategorija: DELETE
+
+################################################################
+# CATEGORIES - DELETE
+################################################################
+
+### Delete a category (expect 204)
 DELETE {{host}}/api/categories/3
+
+### Check the deletion (expect 404)
+GET {{host}}/api/categories/3
+
+### Delete a category that does not exist (expect 404)
+DELETE {{host}}/api/categories/999

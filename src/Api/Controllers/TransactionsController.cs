@@ -1,6 +1,7 @@
 using Api.Models;
 using Api.Services;
 using Microsoft.AspNetCore.Mvc;
+using Api.DTOs;
 
 namespace Api.Controllers;
 
@@ -35,21 +36,35 @@ return Ok(transaction);
 
 
 [HttpPost]
- public ActionResult<Transaction> AddTransaction(Transaction item){
-var transaction=_service.AddTransaction(item);
+ public ActionResult<Transaction> AddTransaction(CreateTransactionDto item){
 
-return CreatedAtAction(nameof(GetTransactionById), new{id= transaction.Id}, transaction);
+var newTransaction = new Transaction {
+    Amount = item.Amount,
+    Description = item.Description,
+    Date = item.Date,
+    Type = item.Type,
+    CategoryId = item.CategoryId
+};
+var transaction = _service.AddTransaction(newTransaction);
+return CreatedAtAction(nameof(GetTransactionById), new{id= newTransaction.Id}, newTransaction);
  }  
 
 
  [HttpPut("{id}")]
- public IActionResult  ChangeTransaction (int id, Transaction item){
+ public IActionResult  ChangeTransaction (int id, CreateTransactionDto item){
 
 
-var found=_service.ChangeTransaction(id, item);
+var newTransaction = new Transaction {
+    Amount = item.Amount,
+    Description = item.Description,
+    Date = item.Date,
+    Type = item.Type,
+    CategoryId = item.CategoryId
+};
 
-        if (found)
-        {
+var found=_service.ChangeTransaction(id, newTransaction);
+
+        if (found){
             
     return NoContent();
         }
