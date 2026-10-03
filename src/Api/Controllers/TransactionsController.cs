@@ -1,4 +1,5 @@
 using Api.Models;
+using Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
@@ -7,6 +8,12 @@ namespace Api.Controllers;
 [Route("api/[controller]")]
 
 public class TransactionsController : ControllerBase{
+
+    private readonly ITransactionService _service;
+
+    public TransactionsController(ITransactionService option){
+    _service= option;
+    }
 
 static Category foodCategory=new Category {
 Id=1,
@@ -69,34 +76,19 @@ new Transaction{
 [HttpGet]
 public ActionResult<List<Transaction>> GetTransactions(int? categoryId, DateTime? from, DateTime? to){
 
- List<Transaction> Result=Transactions;
 
-if(categoryId.HasValue){
- Result = Transactions.Where(item => item.CategoryId== categoryId).ToList(); 
-}
-
- if(from.HasValue ){
-Result = Result.Where(item => item.Date.Date>=from).ToList();
- }
-
-if(to.HasValue){
- Result = Result.Where(item => item.Date.Date<=to).ToList();
-}
- 
-return Ok(Result);
-
+return Ok(_service.GetAll(categoryId, from, to));
 }
 
 [HttpGet("{id}")]
 public ActionResult<Transaction> GetTransactionById(int id){
 
-foreach(var item in Transactions){
-    if( item.Id== id )
-    return Ok(item);
+var transaction=_service.GetById(id);
 
-
-}
-return NotFound();
+if(transaction== null){
+return NotFound();   
+        }
+return Ok(transaction);
 }
 
 
