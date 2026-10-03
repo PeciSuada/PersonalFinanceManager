@@ -1,3 +1,4 @@
+using Api.Models;
 using Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +9,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 
 builder.Services.AddSingleton<ITransactionService, TransactionService>();
+builder.Services.AddSingleton<ICategoryService, CategoryService>();
 
 var app = builder.Build();
 

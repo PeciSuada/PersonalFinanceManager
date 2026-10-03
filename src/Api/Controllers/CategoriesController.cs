@@ -1,4 +1,5 @@
 using Api.Models;
+using Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
@@ -8,72 +9,50 @@ namespace Api.Controllers;
 
 public class CategoriesController : ControllerBase{
 
-static List<Category> Categories=[
+private readonly  ICategoryService _service;
+public CategoriesController(ICategoryService option)
+    {
+        _service=option;
+    }
 
-new Category{
-Id=1,
-Name="Groceries"
 
-},
 
-new Category{
-Id=2,
-Name="Electronics"
-
-},
-
-new Category{
-Id=3,
-Name="Bills"
-}
-
-];
 
 [HttpGet]
 public ActionResult<List<Category>> GetCategories(){
-return Ok(Categories);
+    var category=_service.GetCategories();
+   return Ok(category);
+
 
 }
 
 [HttpGet("{id}")]
 public ActionResult<Category> GetCategoryById(int id){
-foreach(var item in Categories){
-if(item.Id == id){
-    return Ok(item);
-}
 
+var category=_service.GetCategoryById(id);
+if(category==null){
+   return NotFound();
 }
-return NotFound();
+ return Ok(category);
+
 }
 
 [HttpPost]
 public ActionResult<Category> AddCategory(Category item){
+var category=_service.AddCategory(item);
 
-int maxid=0;
-
-foreach(var i in Categories){
-if(i.Id> maxid){
-maxid=i.Id;
-}
-}
-maxid+=1;
-item.Id=maxid;
-
-Categories.Add(item);
-return CreatedAtAction(nameof(GetCategoryById), new{id= item.Id}, item);
+return CreatedAtAction(nameof(GetCategoryById), new{id= category.Id}, category);
 }
 
 [HttpPut("{id}")]
 
 public IActionResult ChangeCategory(int id, Category item){
 
+var found=_service.ChangeCategory(id,item);
 
- foreach(var i in Categories){
-if(id == i.Id){
-    i.Name=item.Name;
+if(found){
+
     return NoContent();
-}
-
 }
 return NotFound();
 }
@@ -81,12 +60,14 @@ return NotFound();
 [HttpDelete("{id}")]
  public IActionResult DeleteCategory (int id){
 
-foreach(var i in Categories){
-if(i.Id== id){
-Categories.Remove(i);
+
+var found=_service.DeleteCategory(id);
+
+if(found){
 return NoContent();
 }
-}
 return NotFound();
- }
+}
+
+ 
 }

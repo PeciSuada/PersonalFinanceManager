@@ -4,6 +4,7 @@ namespace Api.Services;
 public class TransactionService : ITransactionService{
 
  
+
 static Category foodCategory=new Category {
 Id=1,
 Name="Groceries"
@@ -18,6 +19,12 @@ static Category billsCategory= new Category{
 Id=3,
 Name="Bills"
 };  
+
+static Category earningsCategory=new Category
+{
+    Id=4,
+    Name="Earnings"
+};
 
 static List<Transaction> Transactions = [
 
@@ -56,8 +63,8 @@ new Transaction{
     Description="Salary",
     Date=DateTime.Now,
     Type=TransactionType.Income,
-    CategoryId=foodCategory.Id,
-    Category=foodCategory
+    CategoryId=earningsCategory.Id,
+    Category=earningsCategory
 }
 
 ];
@@ -101,5 +108,78 @@ Result=Result.Where(item=>item.Date.Date<=to).ToList();
 
 return Result;
 }
+
+
+ public Transaction AddTransaction(Transaction item){
+
+int maxid=0;
+foreach(var i in Transactions){
+
+if(i.Id > maxid){
+maxid=i.Id;
+}
+}
+maxid +=1;
+item.Id=maxid;
+
+
+Transactions.Add(item);
+return item;
+ }  
+
+ public bool ChangeTransaction (int id, Transaction item){
+ 
+ foreach(var i in Transactions){
+if(id == i.Id){
+    i.Amount=item.Amount;
+    i.Description=item.Description;
+    i.Date=item.Date;
+    i.Type=item.Type;
+    i.CategoryId=item.CategoryId;
+ return true;
+}
+
+ }
+   return false;
+}
+
+
+ public bool DeleteTransaction (int id){
+
+foreach(var i in Transactions){
+if(i.Id== id){
+Transactions.Remove(i);
+return true;
+}
+}
+return false;
+ }
+
+
+
+
+public Summary GetSummary(DateTime? from, DateTime? to){
+
+List<Transaction> Result=Transactions;
+
+if(from.HasValue){
+
+Result= Result.Where(item=> item.Date.Date>=from).ToList();  
+}
+
+if(to.HasValue){
+Result= Result.Where(item=> item.Date.Date<=to).ToList();
+}
+
+
+decimal income = Result.Where(item=>item.Type==TransactionType.Income).Sum(item=>item.Amount);
+decimal expense = Result.Where(item=>item.Type==TransactionType.Expense).Sum(item=>item.Amount);
+decimal balance = income-expense;
+return new Summary {TotalIncome= income, TotalExpense= expense, Balance= balance};
+
+}
+
+
+
    
 }

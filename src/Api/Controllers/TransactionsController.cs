@@ -15,64 +15,6 @@ public class TransactionsController : ControllerBase{
     _service= option;
     }
 
-static Category foodCategory=new Category {
-Id=1,
-Name="Groceries"
-};
-
-static Category electronicsCategory=new Category {
-Id=2,
-Name="Electronics"
-};
-
-static Category billsCategory= new Category{
-Id=3,
-Name="Bills"
-};  
-
-static List<Transaction> Transactions = [
-
-new Transaction {
-Id = 101,
-Amount = 45.50m,
-Description = "Weekly grocery shopping at Supermarket",
-Date = DateTime.Now,
-Type = TransactionType.Expense,
-CategoryId = foodCategory.Id,
-Category = foodCategory 
-},
-
-new Transaction {
-Id=102,
-Amount=1000.5m,
-Description="New Tv",
-Date= DateTime.Now,
-Type= TransactionType.Expense,
-CategoryId=electronicsCategory.Id,
-Category=electronicsCategory
-},
-
-new Transaction{
-Id=103,
-Amount=121.5m,
-Description="Monthly bills",
-Date= DateTime.Now,
-Type= TransactionType.Expense,
-CategoryId=billsCategory.Id,
-Category=billsCategory
-},
-new Transaction{
-    Id=104,
-    Amount=1500m,
-    Description="Salary",
-    Date=DateTime.Now,
-    Type=TransactionType.Income,
-    CategoryId=foodCategory.Id,
-    Category=foodCategory
-}
-
-];
-
 [HttpGet]
 public ActionResult<List<Transaction>> GetTransactions(int? categoryId, DateTime? from, DateTime? to){
 
@@ -94,41 +36,25 @@ return Ok(transaction);
 
 [HttpPost]
  public ActionResult<Transaction> AddTransaction(Transaction item){
+var transaction=_service.AddTransaction(item);
 
-int maxid=0;
-foreach(var i in Transactions){
-
-if(i.Id > maxid){
-maxid=i.Id;
-}
-}
-maxid +=1;
-item.Id=maxid;
-
-
-Transactions.Add(item);
-return CreatedAtAction(nameof(GetTransactionById), new{id= item.Id}, item);
+return CreatedAtAction(nameof(GetTransactionById), new{id= transaction.Id}, transaction);
  }  
 
 
  [HttpPut("{id}")]
  public IActionResult  ChangeTransaction (int id, Transaction item){
- 
- foreach(var i in Transactions){
-if(id == i.Id){
-    i.Amount=item.Amount;
-    i.Description=item.Description;
-    i.Date=item.Date;
-    i.Type=item.Type;
-    i.CategoryId=item.CategoryId;
 
+
+var found=_service.ChangeTransaction(id, item);
+
+        if (found)
+        {
+            
     return NoContent();
-}
+        }
+        return NotFound();
 
- 
- }
-
-return NotFound();
  }
 
 
@@ -136,12 +62,13 @@ return NotFound();
  [HttpDelete("{id}")]
  public IActionResult DeleteTransaction (int id){
 
-foreach(var i in Transactions){
-if(i.Id== id){
-Transactions.Remove(i);
+ var found= _service.DeleteTransaction(id);
+
+if(found){
+
 return NoContent();
 }
-}
+
 return NotFound();
  }
 
@@ -150,22 +77,9 @@ return NotFound();
 
 public ActionResult<Summary> GetSummary(DateTime? from, DateTime? to){
 
-List<Transaction> Result=Transactions;
+var summary=_service.GetSummary(from,to);
 
-if(from.HasValue){
-
-Result= Result.Where(item=> item.Date.Date>=from).ToList();  
-}
-
-if(to.HasValue){
-Result= Result.Where(item=> item.Date.Date<=to).ToList();
-}
-
-
-decimal income = Result.Where(item=>item.Type==TransactionType.Income).Sum(item=>item.Amount);
-decimal expense = Result.Where(item=>item.Type==TransactionType.Expense).Sum(item=>item.Amount);
-decimal balance = income-expense;
-return Ok(new Summary {TotalIncome= income, TotalExpense= expense, Balance= balance});
+return Ok(summary);
 
 }
 

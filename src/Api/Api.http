@@ -1,6 +1,85 @@
-@Api_HostAddress = http://localhost:5205
+@host = http://localhost:5205
 
-GET {{Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Sve transakcije
+GET {{host}}/api/transactions
 
-###
+### Filter po kategoriji i datumu
+GET {{host}}/api/transactions?categoryId=1&from=2026-10-01&to=2026-10-31
+
+### Jedna transakcija
+GET {{host}}/api/transactions/101
+
+### Nepostojeća (očekuješ 404)
+GET {{host}}/api/transactions/999
+
+### POST
+POST {{host}}/api/transactions
+Content-Type: application/json
+
+{
+  "amount": 20.00,
+  "description": "Kafa",
+  "date": "2026-10-03T10:00:00",
+  "type": 1,
+  "categoryId": 1
+}
+
+### PUT
+PUT {{host}}/api/transactions/101
+Content-Type: application/json
+
+{
+  "amount": 50.00,
+  "description": "Izmijenjeno",
+  "date": "2026-10-03T10:00:00",
+  "type": 1,
+  "categoryId": 2
+}
+
+### DELETE
+DELETE {{host}}/api/transactions/102
+
+### Summary
+GET {{host}}/api/transactions/summary
+
+
+
+
+
+
+
+### Kategorije: sve
+GET {{host}}/api/categories
+
+### Kategorija: jedna
+GET {{host}}/api/categories/1
+
+### Kategorija: nepostojeća (očekuješ 404)
+GET {{host}}/api/categories/999
+
+### Kategorija: POST
+POST {{host}}/api/categories
+Content-Type: application/json
+
+{
+  "name": "Zabava"
+}
+
+### Kategorija: PUT
+PUT {{host}}/api/categories/1
+Content-Type: application/json
+
+{
+  "name": "Hrana"
+}
+
+### Kategorija: PUT nepostojeća (očekuješ 404)
+PUT {{host}}/api/categories/999
+Content-Type: application/json
+
+{
+  "name": "Test"
+}
+
+### Kategorija: DELETE
+DELETE {{host}}/api/categories/3
