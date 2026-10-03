@@ -53,6 +53,15 @@ Date= DateTime.Now,
 Type= TransactionType.Expense,
 CategoryId=billsCategory.Id,
 Category=billsCategory
+},
+new Transaction{
+    Id=104,
+    Amount=1500m,
+    Description="Salary",
+    Date=DateTime.Now,
+    Type=TransactionType.Income,
+    CategoryId=foodCategory.Id,
+    Category=foodCategory
 }
 
 ];
@@ -143,5 +152,39 @@ return NoContent();
 }
 return NotFound();
  }
+
+
+[HttpGet("summary")]
+
+public ActionResult<Summary> GetSummary(DateTime? from, DateTime? to){
+
+List<Transaction> Result=Transactions;
+
+if(from.HasValue){
+
+Result= Result.Where(item=> item.Date.Date>=from).ToList();  
+}
+
+if(to.HasValue){
+Result= Result.Where(item=> item.Date.Date<=to).ToList();
+}
+
+
+decimal income = Result.Where(item=>item.Type==TransactionType.Income).Sum(item=>item.Amount);
+decimal expense = Result.Where(item=>item.Type==TransactionType.Expense).Sum(item=>item.Amount);
+decimal balance = income-expense;
+return Ok(new Summary {TotalIncome= income, TotalExpense= expense, Balance= balance});
+
+}
+
+
+
+
+
+
+
+
+
+
 }
 
