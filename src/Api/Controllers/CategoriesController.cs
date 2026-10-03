@@ -1,6 +1,7 @@
 using Api.Models;
 using Api.Services;
 using Microsoft.AspNetCore.Mvc;
+using Api.DTOs;
 
 namespace Api.Controllers;
 
@@ -38,17 +39,29 @@ if(category==null){
 }
 
 [HttpPost]
-public ActionResult<Category> AddCategory(Category item){
-var category=_service.AddCategory(item);
+public ActionResult<Category> AddCategory(CreateCategoryDto item){
+  
+    var NewCategory = new Category
+    {
+        Name=item.Name
+    };
 
-return CreatedAtAction(nameof(GetCategoryById), new{id= category.Id}, category);
+var category=_service.AddCategory(NewCategory);
+
+return CreatedAtAction(nameof(GetCategoryById), new{id= NewCategory.Id}, NewCategory);
 }
+
+
 
 [HttpPut("{id}")]
 
-public IActionResult ChangeCategory(int id, Category item){
+public IActionResult ChangeCategory(int id, CreateCategoryDto item){
 
-var found=_service.ChangeCategory(id,item);
+ var NewCategory = new Category
+    {
+        Name=item.Name
+    };
+var found=_service.ChangeCategory(id,NewCategory);
 
 if(found){
 
