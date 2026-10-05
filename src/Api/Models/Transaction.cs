@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 namespace Api.Models;
 
 
@@ -8,6 +9,7 @@ public int Id{
     set;
 }
 
+[Column(TypeName = "decimal(18,2)")]
 public decimal Amount{
     get;
     set;

@@ -1,185 +1,100 @@
+using Api.Data;
 using Api.Models;
+using Microsoft.EntityFrameworkCore;
 namespace Api.Services;
 
-public class TransactionService : ITransactionService{
-
- 
-
-static Category foodCategory=new Category {
-Id=1,
-Name="Groceries"
-};
-
-static Category electronicsCategory=new Category {
-Id=2,
-Name="Electronics"
-};
-
-static Category billsCategory= new Category{
-Id=3,
-Name="Bills"
-};  
-
-static Category earningsCategory=new Category
+public class TransactionService : ITransactionService
 {
-    Id=4,
-    Name="Earnings"
-};
+    private readonly AppDbContext _context;
 
-static List<Transaction> Transactions = [
-
-new Transaction {
-Id = 101,
-Amount = 45.50m,
-Description = "Weekly grocery shopping at Supermarket",
-Date = DateTime.Now,
-Type = TransactionType.Expense,
-CategoryId = foodCategory.Id,
-Category = foodCategory 
-},
-
-new Transaction {
-Id=102,
-Amount=1000.5m,
-Description="New Tv",
-Date= DateTime.Now,
-Type= TransactionType.Expense,
-CategoryId=electronicsCategory.Id,
-Category=electronicsCategory
-},
-
-new Transaction{
-Id=103,
-Amount=121.5m,
-Description="Monthly bills",
-Date= DateTime.Now,
-Type= TransactionType.Expense,
-CategoryId=billsCategory.Id,
-Category=billsCategory
-},
-new Transaction{
-    Id=104,
-    Amount=1500m,
-    Description="Salary",
-    Date=DateTime.Now,
-    Type=TransactionType.Income,
-    CategoryId=earningsCategory.Id,
-    Category=earningsCategory
-}
-
-];
-
-
-public Transaction? GetById(int id)
+    public TransactionService(AppDbContext context)
     {
-        foreach(var item in Transactions)
-        {
-            if(item.Id==id){
-            return item;
-            }
-        }
-
-return null;
+        _context = context;
     }
 
+    public async Task<List<Transaction>> GetAll(int? categoryId, DateTime? from, DateTime? to)
+    {
+        var query = _context.Transactions.Include(t => t.Category).AsQueryable();
 
+        if (categoryId.HasValue)
+        {
+            query = query.Where(t => t.CategoryId == categoryId.Value);
+        }
+        if (from.HasValue)
+        {
+            query = query.Where(t => t.Date >= from.Value.Date);
+        }
+        if (to.HasValue)
+        {
+            query = query.Where(t => t.Date < to.Value.Date.AddDays(1));
+        }
 
+        return await query.ToListAsync();
+    }
 
+    public async Task<Transaction?> GetById(int id)
+    {
+        return await _context.Transactions.Include(t => t.Category).FirstOrDefaultAsync(t => t.Id == id);
+    }
 
+    public async Task<Transaction> AddTransaction(Transaction item)
+    {
+        _context.Transactions.Add(item); 
+        
+        await _context.SaveChangesAsync();
+        
+        return item;
+    }
 
-public List<Transaction> GetAll(int? categoryId, DateTime? from, DateTime? to){
+    public async Task<bool> ChangeTransaction(int id, Transaction item)
+    {
+        var transaction = await _context.Transactions.FindAsync(id);
+        if (transaction == null)
+        {
+            return false;
+        }
 
- List<Transaction> Result=Transactions;
+        transaction.Amount = item.Amount;
+        transaction.Description = item.Description;
+        transaction.Date = item.Date;
+        transaction.Type = item.Type;
+        transaction.CategoryId = item.CategoryId;
 
-if(categoryId.HasValue){
+        await _context.SaveChangesAsync();
+        return true;
+    }
 
-Result=Result.Where(item=>item.CategoryId==categoryId).ToList();
-}
+    public async Task<bool> DeleteTransaction(int id)
+    {
+        var transaction = await _context.Transactions.FindAsync(id);
+        if (transaction == null)
+        {
+            return false;
+        }
 
-if(from.HasValue){
-Result=Result.Where(item=>item.Date.Date>=from).ToList();
-}
+        _context.Transactions.Remove(transaction);
+       
+        await _context.SaveChangesAsync();
+        return true;
+    }
 
+    public async Task<Summary> GetSummary(DateTime? from, DateTime? to)
+    {
+        var query = _context.Transactions.AsQueryable();
 
-if(to.HasValue){
-Result=Result.Where(item=>item.Date.Date<=to).ToList();
+        if (from.HasValue)
+        {
+            query = query.Where(t => t.Date >= from.Value.Date);
+        }
+        if (to.HasValue)
+        {
+            query = query.Where(t => t.Date < to.Value.Date.AddDays(1));
+        }
 
-}
+        var income = await query.Where(t => t.Type == TransactionType.Income).SumAsync(t => t.Amount);
+        
+        var expense = await query.Where(t => t.Type == TransactionType.Expense).SumAsync(t => t.Amount);
 
-return Result;
-}
-
-
- public Transaction AddTransaction(Transaction item){
-
-int maxid=0;
-foreach(var i in Transactions){
-
-if(i.Id > maxid){
-maxid=i.Id;
-}
-}
-maxid +=1;
-item.Id=maxid;
-
-
-Transactions.Add(item);
-return item;
- }  
-
- public bool ChangeTransaction (int id, Transaction item){
- 
- foreach(var i in Transactions){
-if(id == i.Id){
-    i.Amount=item.Amount;
-    i.Description=item.Description;
-    i.Date=item.Date;
-    i.Type=item.Type;
-    i.CategoryId=item.CategoryId;
- return true;
-}
-
- }
-   return false;
-}
-
-
- public bool DeleteTransaction (int id){
-
-foreach(var i in Transactions){
-if(i.Id== id){
-Transactions.Remove(i);
-return true;
-}
-}
-return false;
- }
-
-
-
-
-public Summary GetSummary(DateTime? from, DateTime? to){
-
-List<Transaction> Result=Transactions;
-
-if(from.HasValue){
-
-Result= Result.Where(item=> item.Date.Date>=from).ToList();  
-}
-
-if(to.HasValue){
-Result= Result.Where(item=> item.Date.Date<=to).ToList();
-}
-
-
-decimal income = Result.Where(item=>item.Type==TransactionType.Income).Sum(item=>item.Amount);
-decimal expense = Result.Where(item=>item.Type==TransactionType.Expense).Sum(item=>item.Amount);
-decimal balance = income-expense;
-return new Summary {TotalIncome= income, TotalExpense= expense, Balance= balance};
-
-}
-
-
-
-   
+        return new Summary{TotalIncome = income,TotalExpense = expense,Balance = income - expense};
+    }
 }

@@ -1,63 +1,79 @@
 @host = http://localhost:5205
 
-# Personal Finance Manager - API requests
-#
-# How to use:
-#   1. Start the API: dotnet run --project src/Api
-#   2. Open this file in VS Code (REST Client extension required)
-#   3. Click "Send Request" above any request
-#
-# Notes:
-#   - Data is stored in memory, so restarting the API resets everything.
-#   - Run the requests top to bottom. Destructive requests (DELETE) are at the end of each section.
-#   - Transaction type: 0 = Income, 1 = Expense
+### Create Groceries (expect 201)
+POST {{host}}/api/categories
+Content-Type: application/json
+
+{ "name": "Groceries" }
+
+### Create Electronics (expect 201)
+POST {{host}}/api/categories
+Content-Type: application/json
+
+{ "name": "Electronics" }
+
+### Create Bills (expect 201)
+POST {{host}}/api/categories
+Content-Type: application/json
+
+{ "name": "Bills" }
+
+### Create Earnings (expect 201)
+POST {{host}}/api/categories
+Content-Type: application/json
+
+{ "name": "Earnings" }
+
+### Get all (expect 200, four categories)
+GET {{host}}/api/categories
+
+### Get one (expect 200)
+GET {{host}}/api/categories/1
+
+### Get one that does not exist (expect 404)
+GET {{host}}/api/categories/999
+
+### Validation: empty name (expect 400)
+POST {{host}}/api/categories
+Content-Type: application/json
+
+{ "name": "" }
+
+### Validation: name missing (expect 400)
+POST {{host}}/api/categories
+Content-Type: application/json
+
+{ }
+
+### Update (expect 204)
+PUT {{host}}/api/categories/2
+Content-Type: application/json
+
+{ "name": "Tech" }
+
+### Check the update (expect Tech)
+GET {{host}}/api/categories/2
+
+### Update that does not exist (expect 404)
+PUT {{host}}/api/categories/999
+Content-Type: application/json
+
+{ "name": "Nothing" }
+
+### Delete (expect 204)
+DELETE {{host}}/api/categories/4
+
+### Check the deletion (expect 404)
+GET {{host}}/api/categories/4
+
+### Delete that does not exist (expect 404)
+DELETE {{host}}/api/categories/999
 
 
-################################################################
-# TRANSACTIONS - READ
-################################################################
-
-### Get all transactions
-GET {{host}}/api/transactions
-
-### Get a single transaction (expect 200)
-GET {{host}}/api/transactions/101
-
-### Get a transaction that does not exist (expect 404)
-GET {{host}}/api/transactions/999
 
 
-################################################################
-# TRANSACTIONS - FILTERS
-################################################################
 
-### Filter by category
-GET {{host}}/api/transactions?categoryId=2
-
-### Filter by category that has no transactions (expect empty list)
-GET {{host}}/api/transactions?categoryId=99
-
-### Filter by start date only
-GET {{host}}/api/transactions?from=2026-10-01
-
-### Filter by end date only
-GET {{host}}/api/transactions?to=2026-10-31
-
-### Filter by date range
-GET {{host}}/api/transactions?from=2026-10-01&to=2026-10-31
-
-### Filter by category and date range
-GET {{host}}/api/transactions?categoryId=1&from=2026-10-01&to=2026-10-31
-
-### Filter with a date range in the past (expect empty list)
-GET {{host}}/api/transactions?from=2020-01-01&to=2020-12-31
-
-
-################################################################
-# TRANSACTIONS - SUMMARY
-################################################################
-
-### Summary for all transactions (total income, total expense, balance)
+### Summary for all transactions
 GET {{host}}/api/transactions/summary
 
 ### Summary for a date range
@@ -67,11 +83,20 @@ GET {{host}}/api/transactions/summary?from=2026-10-01&to=2026-10-31
 GET {{host}}/api/transactions/summary?from=2020-01-01&to=2020-12-31
 
 
-################################################################
-# TRANSACTIONS - CREATE (POST)
-################################################################
 
-### Create an expense (expect 201)
+### Create income
+POST {{host}}/api/transactions
+Content-Type: application/json
+
+{
+  "amount": 1200.00,
+  "description": "Freelance project",
+  "date": "2026-10-03T12:00:00",
+  "type": 0,
+  "categoryId": 5
+}
+
+### Create expense 1
 POST {{host}}/api/transactions
 Content-Type: application/json
 
@@ -83,239 +108,32 @@ Content-Type: application/json
   "categoryId": 1
 }
 
-### Create an income (expect 201)
+### Create expense 2
 POST {{host}}/api/transactions
 Content-Type: application/json
 
 {
-  "amount": 1200.00,
-  "description": "Freelance project",
-  "date": "2026-10-03T12:00:00",
-  "type": 0,
-  "categoryId": 1
-}
-
-### Validation: negative amount (expect 400)
-POST {{host}}/api/transactions
-Content-Type: application/json
-
-{
-  "amount": -5,
-  "description": "Invalid amount",
-  "date": "2026-10-03T10:00:00",
+  "amount": 80.50,
+  "description": "Headphones",
+  "date": "2026-10-04T15:00:00",
   "type": 1,
-  "categoryId": 1
+  "categoryId": 3
 }
 
-### Validation: amount below the minimum (expect 400)
-POST {{host}}/api/transactions
-Content-Type: application/json
+### Delete category that has transactions (now 500, later 409)
+DELETE {{host}}/api/categories/1
 
-{
-  "amount": 0.01,
-  "description": "Amount too small",
-  "date": "2026-10-03T10:00:00",
-  "type": 1,
-  "categoryId": 1
-}
+### Delete category without transactions (expect 204)
+DELETE {{host}}/api/categories/2
 
-### Validation: amount above the maximum (expect 400)
-POST {{host}}/api/transactions
-Content-Type: application/json
+### Delete duplicate 6
+DELETE {{host}}/api/categories/6
 
-{
-  "amount": 99999999,
-  "description": "Amount too large",
-  "date": "2026-10-03T10:00:00",
-  "type": 1,
-  "categoryId": 1
-}
+### Delete duplicate 7
+DELETE {{host}}/api/categories/7
 
-### Validation: empty description (expect 400)
-POST {{host}}/api/transactions
-Content-Type: application/json
+### Delete duplicate 8
+DELETE {{host}}/api/categories/8
 
-{
-  "amount": 10,
-  "description": "",
-  "date": "2026-10-03T10:00:00",
-  "type": 1,
-  "categoryId": 1
-}
-
-### Validation: description missing completely (expect 400)
-POST {{host}}/api/transactions
-Content-Type: application/json
-
-{
-  "amount": 10,
-  "date": "2026-10-03T10:00:00",
-  "type": 1,
-  "categoryId": 1
-}
-
-### Validation: invalid category id (expect 400)
-POST {{host}}/api/transactions
-Content-Type: application/json
-
-{
-  "amount": 10,
-  "description": "Invalid category",
-  "date": "2026-10-03T10:00:00",
-  "type": 1,
-  "categoryId": 0
-}
-
-### Validation: malformed JSON body (expect 400)
-POST {{host}}/api/transactions
-Content-Type: application/json
-
-{
-  "amount": "not a number"
-}
-
-
-################################################################
-# TRANSACTIONS - UPDATE (PUT)
-################################################################
-
-### Update a transaction (expect 204)
-PUT {{host}}/api/transactions/101
-Content-Type: application/json
-
-{
-  "amount": 50.00,
-  "description": "Updated description",
-  "date": "2026-10-03T10:00:00",
-  "type": 1,
-  "categoryId": 2
-}
-
-### Check the update (expect the new values)
-GET {{host}}/api/transactions/101
-
-### Validation: invalid data on update (expect 400)
-PUT {{host}}/api/transactions/101
-Content-Type: application/json
-
-{
-  "amount": -5,
-  "description": "",
-  "date": "2026-10-03T10:00:00",
-  "type": 1,
-  "categoryId": 1
-}
-
-### Update a transaction that does not exist (expect 404)
-PUT {{host}}/api/transactions/999
-Content-Type: application/json
-
-{
-  "amount": 10,
-  "description": "Does not exist",
-  "date": "2026-10-03T10:00:00",
-  "type": 1,
-  "categoryId": 1
-}
-
-
-################################################################
-# TRANSACTIONS - DELETE
-################################################################
-
-### Delete a transaction (expect 204)
-DELETE {{host}}/api/transactions/102
-
-### Check the deletion (expect 404)
-GET {{host}}/api/transactions/102
-
-### Delete a transaction that does not exist (expect 404)
-DELETE {{host}}/api/transactions/999
-
-
-################################################################
-# CATEGORIES - READ
-################################################################
-
-### Get all categories
-GET {{host}}/api/categories
-
-### Get a single category (expect 200)
-GET {{host}}/api/categories/1
-
-### Get a category that does not exist (expect 404)
-GET {{host}}/api/categories/999
-
-
-################################################################
-# CATEGORIES - CREATE (POST)
-################################################################
-
-### Create a category (expect 201)
-POST {{host}}/api/categories
-Content-Type: application/json
-
-{
-  "name": "Entertainment"
-}
-
-### Validation: empty name (expect 400 once CreateCategoryDto is in place)
-POST {{host}}/api/categories
-Content-Type: application/json
-
-{
-  "name": ""
-}
-
-### Validation: name missing completely (expect 400 once CreateCategoryDto is in place)
-POST {{host}}/api/categories
-Content-Type: application/json
-
-{
-}
-
-
-################################################################
-# CATEGORIES - UPDATE (PUT)
-################################################################
-
-### Update a category (expect 204)
-PUT {{host}}/api/categories/1
-Content-Type: application/json
-
-{
-  "name": "Food"
-}
-
-### Check the update (expect the new name)
-GET {{host}}/api/categories/1
-
-### Validation: empty name on update (expect 400 once CreateCategoryDto is in place)
-PUT {{host}}/api/categories/1
-Content-Type: application/json
-
-{
-  "name": ""
-}
-
-### Update a category that does not exist (expect 404)
-PUT {{host}}/api/categories/999
-Content-Type: application/json
-
-{
-  "name": "Does not exist"
-}
-
-
-################################################################
-# CATEGORIES - DELETE
-################################################################
-
-### Delete a category (expect 204)
-DELETE {{host}}/api/categories/3
-
-### Check the deletion (expect 404)
-GET {{host}}/api/categories/3
-
-### Delete a category that does not exist (expect 404)
-DELETE {{host}}/api/categories/999
+### Delete duplicate 9
+DELETE {{host}}/api/categories/9

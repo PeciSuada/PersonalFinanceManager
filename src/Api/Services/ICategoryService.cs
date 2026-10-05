@@ -5,14 +5,14 @@ namespace Api.Services;
 
 public interface ICategoryService{
 
- List<Category>GetCategories();
+Task <List<Category>> GetCategories();
 
- public Category? GetCategoryById(int id);
+ public Task <Category?> GetCategoryById(int id);
 
-  public Category AddCategory(Category item);
+  public Task <Category> AddCategory(Category item);
 
-  public bool ChangeCategory(int id, Category item);
+  public Task <bool> ChangeCategory(int id, Category item);
 
-   public bool DeleteCategory (int id);
+   public Task <bool> DeleteCategory (int id);
 
 }

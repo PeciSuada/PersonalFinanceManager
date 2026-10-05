@@ -1,95 +1,72 @@
 using Api.Models;
 using Api.Services;
 namespace Api.Services;
-
+using Api.Data;
+using Microsoft.EntityFrameworkCore;
 public class CategoryService : ICategoryService{
     
 
-static List<Category> Categories=[
+    private readonly AppDbContext _context;
 
-new Category{
-Id=1,
-Name="Groceries"
+    public CategoryService(AppDbContext context)
+    {
+        _context=context;
+    }
 
-},
 
-new Category{
-Id=2,
-Name="Electronics"
-
-},
-
-new Category{
-Id=3,
-Name="Bills"
-},
-
-new Category{
-Id=4,
-Name="Earnings"
-}
-
-];
-
-public List<Category> GetCategories(){
-return Categories;
+public async Task <List<Category>> GetCategories(){
+return await _context.Categories.ToListAsync();
 
 }
 
 
-public Category?  GetCategoryById(int id){
+public async Task <Category?>  GetCategoryById(int id){
  
-        foreach(var item in Categories){
-            if(item.Id==id){
-            return item;
-            }
-        }
-
-return null;
-  }
+return await _context.Categories.FindAsync(id);  }
 
 
 
 
-  public Category AddCategory(Category item){
+  public async Task <Category> AddCategory(Category item){
 
-int maxid=0;
-
-foreach(var i in Categories){
-if(i.Id> maxid){
-maxid=i.Id;
-}
-}
-maxid+=1;
-item.Id=maxid;
-
-Categories.Add(item);
+_context.Categories.Add(item);
+await _context.SaveChangesAsync();
 return item;
 }
 
 
-public bool ChangeCategory(int id, Category item){
+public async Task<bool> ChangeCategory(int id, Category item){
 
+var category= await _context.Categories.FindAsync(id);
+        if (category == null)
+        {
+            return false;
+        }
+category.Name=item.Name;
 
- foreach(var i in Categories){
-if(id == i.Id){
-    i.Name=item.Name;
-    return true;
-}
-
-}
-return false;
-}
-
- public bool DeleteCategory (int id){
-
-foreach(var i in Categories){
-if(i.Id== id){
-Categories.Remove(i);
+await _context.SaveChangesAsync();
 return true;
+
 }
+
+ public async Task<bool> DeleteCategory (int id){
+var category= await _context.Categories.FindAsync(id);
+ if (category == null)
+        {
+            return false;
+        }
+
+
+        if (await _context.Transactions.AnyAsync(t => t.CategoryId == id))
+{
+    throw new InvalidOperationException("Category has transactions.");
 }
-return false;
- }
+
+
+        _context.Categories.Remove(category);
+        await _context.SaveChangesAsync();
+        return true;
+}
+
 
 }

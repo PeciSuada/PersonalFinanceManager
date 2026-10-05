@@ -1,20 +1,21 @@
 using Api.Models;
-using Api.Services;
 namespace Api.Services;
 
-
-public interface ITransactionService{
-
-List <Transaction> GetAll(int? categoryId, DateTime? from, DateTime? to);
-
-Transaction? GetById(int id);
-
-Transaction AddTransaction(Transaction item);
+public interface ITransactionService
+{
+    Task<List<Transaction>> GetAll(int? categoryId, DateTime? from, DateTime? to);
 
 
-public bool ChangeTransaction (int id, Transaction item);
+   public  Task<Transaction?> GetById(int id);
 
- public bool DeleteTransaction (int id);
 
-public Summary GetSummary(DateTime? from, DateTime? to);
-    }
+     public Task<Transaction> AddTransaction(Transaction item);
+
+    public  Task<bool> ChangeTransaction(int id, Transaction item);
+
+
+    public  Task<bool> DeleteTransaction(int id);
+
+
+    public  Task<Summary> GetSummary(DateTime? from, DateTime? to);
+}
