@@ -34,7 +34,7 @@ public class CreateTransactionDto
         set;
     }
 
-    [Range(1, 100, ErrorMessage = "CategoryId required")]
+    [Range(1, int.MaxValue, ErrorMessage = "CategoryId required")]
     public int CategoryId
     {
         
