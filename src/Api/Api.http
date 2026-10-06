@@ -1,37 +1,29 @@
 @host = http://localhost:5205
 
-### Create Groceries (expect 201)
-POST {{host}}/api/categories
-Content-Type: application/json
+# Personal Finance Manager - API requests
+# Pokreni API: dotnet run --project src/Api
+# Id-eve u zahtjevima prilagodi svojoj bazi.
+# Tip transakcije: 0 = Income, 1 = Expense
 
-{ "name": "Groceries" }
 
-### Create Electronics (expect 201)
-POST {{host}}/api/categories
-Content-Type: application/json
+################################################################
+# CATEGORIES
+################################################################
 
-{ "name": "Electronics" }
-
-### Create Bills (expect 201)
-POST {{host}}/api/categories
-Content-Type: application/json
-
-{ "name": "Bills" }
-
-### Create Earnings (expect 201)
-POST {{host}}/api/categories
-Content-Type: application/json
-
-{ "name": "Earnings" }
-
-### Get all (expect 200, four categories)
+### Get all categories (expect 200)
 GET {{host}}/api/categories
 
-### Get one (expect 200)
+### Get one category (expect 200)
 GET {{host}}/api/categories/1
 
-### Get one that does not exist (expect 404)
+### Get category that does not exist (expect 404)
 GET {{host}}/api/categories/999
+
+### Create a category (expect 201)
+POST {{host}}/api/categories
+Content-Type: application/json
+
+{ "name": "Entertainment" }
 
 ### Validation: empty name (expect 400)
 POST {{host}}/api/categories
@@ -39,39 +31,62 @@ Content-Type: application/json
 
 { "name": "" }
 
-### Validation: name missing (expect 400)
-POST {{host}}/api/categories
+### Update a category (expect 204)
+PUT {{host}}/api/categories/1
 Content-Type: application/json
 
-{ }
+{ "name": "Groceries" }
 
-### Update (expect 204)
-PUT {{host}}/api/categories/2
-Content-Type: application/json
-
-{ "name": "Tech" }
-
-### Check the update (expect Tech)
-GET {{host}}/api/categories/2
-
-### Update that does not exist (expect 404)
+### Update category that does not exist (expect 404)
 PUT {{host}}/api/categories/999
 Content-Type: application/json
 
 { "name": "Nothing" }
 
-### Delete (expect 204)
-DELETE {{host}}/api/categories/4
+### Delete category that has transactions (expect 409)
+DELETE {{host}}/api/categories/1
 
-### Check the deletion (expect 404)
-GET {{host}}/api/categories/4
-
-### Delete that does not exist (expect 404)
+### Delete category that does not exist (expect 404)
 DELETE {{host}}/api/categories/999
 
 
+################################################################
+# TRANSACTIONS - READ
+################################################################
+
+### Get all transactions (expect 200)
+GET {{host}}/api/transactions
+
+### Get one transaction (expect 200, with category)
+GET {{host}}/api/transactions/1
+
+### Get transaction that does not exist (expect 404)
+GET {{host}}/api/transactions/999
 
 
+################################################################
+# TRANSACTIONS - FILTERS
+################################################################
+
+### Filter by category
+GET {{host}}/api/transactions?categoryId=1
+
+### Filter by category with no transactions (expect empty list)
+GET {{host}}/api/transactions?categoryId=99
+
+### Filter by date range
+GET {{host}}/api/transactions?from=2026-10-01&to=2026-10-31
+
+### Filter by category and date range
+GET {{host}}/api/transactions?categoryId=1&from=2026-10-01&to=2026-10-31
+
+### Date range in the past (expect empty list)
+GET {{host}}/api/transactions?from=2020-01-01&to=2020-12-31
+
+
+################################################################
+# TRANSACTIONS - SUMMARY
+################################################################
 
 ### Summary for all transactions
 GET {{host}}/api/transactions/summary
@@ -83,20 +98,11 @@ GET {{host}}/api/transactions/summary?from=2026-10-01&to=2026-10-31
 GET {{host}}/api/transactions/summary?from=2020-01-01&to=2020-12-31
 
 
+################################################################
+# TRANSACTIONS - CREATE, UPDATE, DELETE
+################################################################
 
-### Create income
-POST {{host}}/api/transactions
-Content-Type: application/json
-
-{
-  "amount": 1200.00,
-  "description": "Freelance project",
-  "date": "2026-10-03T12:00:00",
-  "type": 0,
-  "categoryId": 5
-}
-
-### Create expense 1
+### Create an expense (expect 201)
 POST {{host}}/api/transactions
 Content-Type: application/json
 
@@ -108,32 +114,65 @@ Content-Type: application/json
   "categoryId": 1
 }
 
-### Create expense 2
+### Validation: negative amount (expect 400)
 POST {{host}}/api/transactions
 Content-Type: application/json
 
 {
-  "amount": 80.50,
-  "description": "Headphones",
-  "date": "2026-10-04T15:00:00",
+  "amount": -5,
+  "description": "Invalid amount",
+  "date": "2026-10-03T10:00:00",
   "type": 1,
-  "categoryId": 3
+  "categoryId": 1
 }
 
-### Delete category that has transactions (now 500, later 409)
-DELETE {{host}}/api/categories/1
+### Validation: empty description (expect 400)
+POST {{host}}/api/transactions
+Content-Type: application/json
 
-### Delete category without transactions (expect 204)
-DELETE {{host}}/api/categories/2
+{
+  "amount": 10,
+  "description": "",
+  "date": "2026-10-03T10:00:00",
+  "type": 1,
+  "categoryId": 1
+}
 
-### Delete duplicate 6
-DELETE {{host}}/api/categories/6
+### Category that does not exist (expect 400)
+POST {{host}}/api/transactions
+Content-Type: application/json
 
-### Delete duplicate 7
-DELETE {{host}}/api/categories/7
+{
+  "amount": 10,
+  "description": "Unknown category",
+  "date": "2026-10-03T10:00:00",
+  "type": 1,
+  "categoryId": 99
+}
 
-### Delete duplicate 8
-DELETE {{host}}/api/categories/8
+### Update a transaction (expect 204)
+PUT {{host}}/api/transactions/1
+Content-Type: application/json
 
-### Delete duplicate 9
-DELETE {{host}}/api/categories/9
+{
+  "amount": 50.00,
+  "description": "Updated description",
+  "date": "2026-10-03T10:00:00",
+  "type": 1,
+  "categoryId": 1
+}
+
+### Update transaction that does not exist (expect 404)
+PUT {{host}}/api/transactions/999
+Content-Type: application/json
+
+{
+  "amount": 10,
+  "description": "Does not exist",
+  "date": "2026-10-03T10:00:00",
+  "type": 1,
+  "categoryId": 1
+}
+
+### Delete transaction that does not exist (expect 404)
+DELETE {{host}}/api/transactions/999

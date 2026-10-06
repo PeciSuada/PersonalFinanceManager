@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore; 
 using Api.Models;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 namespace Api.Data;
 
 public class AppDbContext : DbContext
