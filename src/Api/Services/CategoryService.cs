@@ -68,5 +68,8 @@ var category= await _context.Categories.FindAsync(id);
         return true;
 }
 
-
+    public async Task AddTransaction(Transaction transaction)
+    {
+        throw new NotImplementedException();
+    }
 }
